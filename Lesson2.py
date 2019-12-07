@@ -131,28 +131,28 @@ def get_from_sj(url: str, pages: int) -> List[List[str]]:
 
 
 # Получаем данные
-data = get_from_sj('https://www.superjob.ru/vacancy/search/?keywords=Python&geo%5Bc%5D%5B0%5D=1', 3)
-data.extend(get_from_hh('https://hh.ru/search/vacancy?area=1&st=searchVacancy&text=python&page=0', 3))
-
-
-if data:
-    df = pd.DataFrame(data, columns=['Вакансия', 'Ссылка', 'ЗП от', 'ЗП до', 'валюта', 'Источник'])
-
-    # Сортируем. Наибольшая зп сверху
-    df[['ЗП от', 'ЗП до']] = df[['ЗП от', 'ЗП до']].apply(pd.to_numeric)
-    df['max'] = df[['ЗП от', 'ЗП до']].max(axis=1)
-    df.sort_values(by=['max'], ascending=False, inplace=True)
-    df.drop('max', axis=1, inplace=True)
-    df.loc[df['ЗП от'].isnull(), 'ЗП от'] = ''
-    df.loc[df['ЗП до'].isnull(), 'ЗП до'] = ''
-
-    # Выводим
-    pd.set_option('display.max_columns', 6)
-    pd.set_option('display.max_rows', df.shape[0])
-    pd.set_option('display.width', 1200)
-    print(df)
-else:
-    print('Ничего не найдено...')
+# data = get_from_sj('https://www.superjob.ru/vacancy/search/?keywords=Python&geo%5Bc%5D%5B0%5D=1', 3)
+# data.extend(get_from_hh('https://hh.ru/search/vacancy?area=1&st=searchVacancy&text=python&page=0', 3))
+#
+#
+# if data:
+#     df = pd.DataFrame(data, columns=['Вакансия', 'Ссылка', 'ЗП от', 'ЗП до', 'валюта', 'Источник'])
+#
+#     # Сортируем. Наибольшая зп сверху
+#     df[['ЗП от', 'ЗП до']] = df[['ЗП от', 'ЗП до']].apply(pd.to_numeric)
+#     df['max'] = df[['ЗП от', 'ЗП до']].max(axis=1)
+#     df.sort_values(by=['max'], ascending=False, inplace=True)
+#     df.drop('max', axis=1, inplace=True)
+#     df.loc[df['ЗП от'].isnull(), 'ЗП от'] = ''
+#     df.loc[df['ЗП до'].isnull(), 'ЗП до'] = ''
+#
+#     # Выводим
+#     pd.set_option('display.max_columns', 6)
+#     pd.set_option('display.max_rows', df.shape[0])
+#     pd.set_option('display.width', 1200)
+#     print(df)
+# else:
+#     print('Ничего не найдено...')
 
 # Не знаю имеет ли смысл приводить здесь - пример запуска:
 # https://www.superjob.ru/vacancy/search/?keywords=Python&geo%5Bc%5D%5B0%5D=1...
