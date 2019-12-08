@@ -82,7 +82,7 @@ def print_gte_salary(max_salary: int):
     for vacancy in vacancies:
         pprint(vacancy)
 
-    vacancies.extend = sj.find({'max': {'$gte': 200000}})
+    vacancies.extend = sj.find({'max': {'$gte': max_salary}})
     for vacancy in vacancies:
         pprint(vacancy)
 
@@ -102,7 +102,7 @@ fill_from_web(url='https://hh.ru/search/vacancy?area=1&st=searchVacancy&text=pyt
               pages=1, update_func=insert_to_db)
 
 # Выборка из базы вакансии с зарплатой больше указанной..
-print_gte_salary(200000)
+print_gte_salary(max_salary=200000)
 
 # Пример вывода:
 
@@ -134,7 +134,7 @@ fill_from_web(url='https://www.superjob.ru/vacancy/search/?keywords=Python&geo%5
 fill_from_web(url='https://hh.ru/search/vacancy?area=1&st=searchVacancy&text=python&page=0',
               pages=3, update_func=update_or_insert_to_db)
 
-print_gte_salary(200000)
+print_gte_salary(max_salary=200000)
 
 # Вывод:
 # {'Currency': 'руб.',
