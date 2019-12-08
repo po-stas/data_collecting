@@ -47,7 +47,7 @@ def update_or_insert_to_db(df: pd.DataFrame) -> (int, int):
             return inserted, updated
 
         try:
-            result = collection.update_one(filter={'Vacancy': row['Vacancy']}, update={'$set': row.to_dict()},
+            result = collection.update_one(filter={'Link': row['Link']}, update={'$set': row.to_dict()},
                                            upsert=True)
             if result.upserted_id:
                 inserted += 1
