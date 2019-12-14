@@ -8,6 +8,7 @@ user_agent = {
         'User-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36'}
 
 mail_ru = 'https://mail.ru'
+lenta_ru = 'https://lenta.ru'
 
 
 def mail_ru_parser(response: str) -> List:
@@ -16,6 +17,7 @@ def mail_ru_parser(response: str) -> List:
 
     news = []
     for link in news_links:
+        print(f'Parsing {link}...' )
         time.sleep(2)
         try:
             news_response = requests.get(link, headers=user_agent)
@@ -32,6 +34,29 @@ def mail_ru_parser(response: str) -> List:
     return news
 
 
+def lenta_ru_parser(response: str) -> List:
+
+    def process_item(item) -> List:
+        title = item.xpath('text()')[0]
+        link = f"https://lenta.ru{item.xpath('@href')[0]}"
+        date = f"{item.xpath('.//time/@title')[0]} : {item.xpath('.//time/text()')[0]}"
+        source_name = 'lenta.ru'
+        source = 'https://lenta.ru'
+        return [title, link, date, source_name, source]
+
+    root = html.fromstring(response)
+    news = []
+
+    news_section = root.xpath('//section[@class="row b-top7-for-main js-top-seven"]')[0]
+    first_item_a = news_section.xpath('.//h2/a')[0]
+    news.append(process_item(first_item_a))
+
+    for item in news_section.xpath('.//div[@class="item"]/a'):
+        news.append(process_item(item))
+
+    return news
+
+
 def parse(link: str, parse_func: Callable) -> List:
     response = requests.get(link, headers=user_agent)
     if response.ok:
@@ -41,6 +66,8 @@ def parse(link: str, parse_func: Callable) -> List:
 ########################################################
 # Start parsing. mail.ru..
 data = parse(link=mail_ru, parse_func=mail_ru_parser)
+# Then go to lenta..
+data.extend(parse(link=lenta_ru, parse_func=lenta_ru_parser))
 
 # Put results to DataFrame
 if data:
@@ -55,22 +82,35 @@ else:
     print('Something went wrong. No news for the moment...')
 
 
-                                                # Title                                               Link                       date        Source_name                     Source_link
-# 0   Путин: жизнь требует нового осмысления Констит...  https://news.mail.ru/politics/39846225/?fromma...  2019-12-12T16:46:26+03:00        Коммерсантъ        http://www.kommersant.ru
-# 1   Здравствуй, Бугенвиль! На карте мира появилось...  https://news.mail.ru/politics/39835551/?fromma...  2019-12-12T14:24:31+03:00  Аргументы и факты                 https://aif.ru/
-# 2   Темнокожая балерина обвинила Большой театр в р...  https://news.mail.ru/society/39845965/?frommail=1  2019-12-12T16:42:33+03:00           Lenta.Ru               https://lenta.ru/
-# 3   В Амурской области осудили мужчину, нашедшего ...  https://news.mail.ru/incident/39837396/?fromma...  2019-12-12T13:11:38+03:00        РИА Новости               http://www.ria.ru
-# 4   Экс-мэра Москвы Лужкова похоронили на Новодеви...  https://news.mail.ru/society/39844361/?frommail=1  2019-12-12T14:50:46+03:00        РИА Новости               http://www.ria.ru
-# 5                Госдума увеличила МРОТ на 850 рублей  https://news.mail.ru/economics/39842657/?fromm...  2019-12-12T13:28:38+03:00               ТАСС             http://www.tass.ru/
-# 6   Кот с необычными ушами стал новой звездой Сети...  https://news.mail.ru/society/39847017/?frommai...  2019-12-12T17:31:45+03:00    Новости Mail.ru            https://news.mail.ru
-# 7   Собиратель мусора нашел амбру на 700 тысяч дол...  https://news.mail.ru/society/39844024/?frommai...  2019-12-12T14:36:13+03:00    Новости Mail.ru            https://news.mail.ru
-# 8   В России может появиться норма об изъятии роди...  https://news.mail.ru/society/39839186/?frommail=1  2019-12-12T10:23:18+03:00        Коммерсантъ        http://www.kommersant.ru
-# 9               США испытали запрещенную ДРСМД ракету  https://news.mail.ru/politics/39849186/?fromma...  2019-12-12T20:38:39+03:00        РИА Новости               http://www.ria.ru
-# 10               «Чернобыльские» шмели стали обжорами  https://news.mail.ru/society/39846976/?frommai...  2019-12-12T17:27:11+03:00    Новости Mail.ru            https://news.mail.ru
-# 11                      Овечкин снова покалечил судью  https://sportmail.ru/news/hockey-nhl/39839019/...  2019-12-12T11:38:51+03:00           Lenta.Ru  http://lenta.ru/rubrics/sport/
-# 12  Врачи обнаружили пациентку с раздвижными пальцами  https://news.mail.ru/society/39842604/?frommai...  2019-12-12T14:00:05+03:00              N + 1              https://nplus1.ru/
-# 13  Допускает ли Черчесов появление Кокорина или М...  https://sportmail.ru/news/football-euro/39842719/  2019-12-12T20:08:47+03:00     Спорт-Экспресс    http://www.sport-express.ru/
-# 14  Госдума запретила штрафовать водителей за сред...  https://auto.mail.ru/article/75526-gosduma_zap...  2019-12-11T16:20:07+03:00            Новости                          /news/
-# 15  Звезда «Великолепного века» изменился для роли...  https://kino.mail.ru/news/52543_zvezda_velikol...                                  Кино Mail.ru            https://kino.mail.ru
+
+# Пример вывода:
+
+
+#                                                 Title                                               Link                       date         Source_name                     Source_link
+# 0   МИД Украины вновь рассматривает возможность ра...  https://news.mail.ru/politics/39868861/?fromma...  2019-12-14T14:42:10+03:00                ТАСС             http://www.tass.ru/
+# 1   Ефимова высмеяла санкции WADA и предрекла себе...  https://sportmail.ru/news/swimming/39870105/?f...  2019-12-14T15:54:42+03:00            Lenta.Ru  http://lenta.ru/rubrics/sport/
+# 2   Сокуров заявил, что ему неинтересны обвинения ...  https://news.mail.ru/society/39871445/?frommail=1  2019-12-14T20:03:14+03:00         Коммерсантъ        http://www.kommersant.ru
+# 3   Депутат подарил чиновникам вазелин при открыти...  https://news.mail.ru/politics/39870580/?fromma...  2019-12-14T17:30:10+03:00         РИА Новости               http://www.ria.ru
+# 4   Участник «Поля чудес» отгадал слово с ошибкой ...  https://news.mail.ru/society/39870252/?frommai...  2019-12-14T16:41:11+03:00         РИА Новости               http://www.ria.ru
+# 5   В США заявили о технологии транспортирования ч...  https://news.mail.ru/society/39869090/?frommai...  2019-12-14T19:00:31+03:00            Lenta.Ru               https://lenta.ru/
+# 6   Минфин нашел способ не допустить обналичивания...  https://news.mail.ru/politics/39868763/?fromma...  2019-12-14T13:13:44+03:00              m24.ru               http://www.m24.ru
+# 7   58-летняя кикбоксерша нокаутировала 21-летнюю ...  https://sportmail.ru/news/martial-arts/3986957...  2019-12-14T14:40:18+03:00            Lenta.Ru  http://lenta.ru/rubrics/sport/
+# 8   Кота, пропавшего в аэропорту, нашли спустя 2 м...  https://news.mail.ru/society/39869133/?frommai...  2019-12-14T13:40:01+03:00     Новости Mail.ru            https://news.mail.ru
+# 9     Спутник показал, как две Америки светятся ночью  https://news.mail.ru/society/39856016/?frommai...  2019-12-13T12:13:08+03:00      Погода Mail.ru         https://pogoda.mail.ru/
+# 10   «Хаббл» сфотографировал межзвездного «пришельца»  https://news.mail.ru/society/39858505/?frommai...  2019-12-13T14:01:18+03:00      Погода Mail.ru         https://pogoda.mail.ru/
+# 11             Братьям Магомедовым собирают новое ОПС  https://news.mail.ru/incident/39866219/?fromma...  2019-12-14T10:38:37+03:00  Газета Коммерсантъ      http://kommersant.ru/daily
+# 12     Минюст предложил узаконить роботов-коллекторов  https://news.mail.ru/politics/39867102/?fromma...  2019-12-14T10:06:13+03:00            Известия                   http://iz.ru/
+# 13  В сборной России есть два Владимира Ткачева. К...  https://sportmail.ru/news/hockey-europe/39870981/  2019-12-14T18:52:53+03:00             Sport24             https://sport24.ru/
+# 14  Судзиловская и Голубкина в провокационных обра...  https://kino.mail.ru/news/52549_sudzilovskaya_...                                   Кино Mail.ru            https://kino.mail.ru
+# 15                          Выбрана новая «Мисс мира»        https://lenta.ru/news/2019/12/14/missworld/    14 декабря 2019 : 20:07            lenta.ru                https://lenta.ru
+# 16           Украинской гривне предрекли резкий обвал           https://lenta.ru/news/2019/12/14/grivna/    14 декабря 2019 : 20:28            lenta.ru                https://lenta.ru
+# 17  Бразильского бойца унесли на носилках после но...              https://lenta.ru/news/2019/12/14/rcc/    14 декабря 2019 : 20:09            lenta.ru                https://lenta.ru
+# 18                «Челси» дома проиграл середняку АПЛ     https://lenta.ru/news/2019/12/14/chelseabourn/    14 декабря 2019 : 19:58            lenta.ru                https://lenta.ru
+# 19  «Нафтогаз» объяснил рост цен для населения рас...         https://lenta.ru/news/2019/12/14/rasplata/    14 декабря 2019 : 19:56            lenta.ru                https://lenta.ru
+# 20      Женщина стала миллионершей из-за ошибки банка  https://lenta.ru/news/2019/12/14/millioner_for...    14 декабря 2019 : 19:49            lenta.ru                https://lenta.ru
+# 21  Российские арестанты попытались устроить прово...      https://lenta.ru/news/2019/12/14/provocatsia/    14 декабря 2019 : 19:36            lenta.ru                https://lenta.ru
+# 22  Россиянку с инсультом повезли в больницу на по...            https://lenta.ru/news/2019/12/14/vagon/    14 декабря 2019 : 19:25            lenta.ru                https://lenta.ru
+# 23  В Германии прокомментировали версию России о р...     https://lenta.ru/news/2019/12/14/germany_maas/    14 декабря 2019 : 19:23            lenta.ru                https://lenta.ru
+# 24   Якубович объяснил ошибку в слове на «Поле чудес»          https://lenta.ru/news/2019/12/14/read_it/    14 декабря 2019 : 18:44            lenta.ru                https://lenta.ru
 #
 # Process finished with exit code 0
